@@ -26,6 +26,40 @@ def test_load():
     
     print("Teste passou com sucesso!")
     
+def test_run():
+    vm = BytePusherVM()
+
+    # Simular a memória com valores conhecidos
+    # Exemplo: temos valores nos primeiros 10 bytes da memória
+    initial_memory = np.array([0x00, 0x01, 0x02, 0x03, 0x04, 
+                                0x05, 0x06, 0x07, 0x08, 0x09], dtype=np.uint8)
+    
+    # Preencher a memória da VM
+    vm.memory = np.zeros(0xFFFFFF, dtype=np.uint8)  # Limpar a memória
+    vm.memory[:len(initial_memory)] = initial_memory  # Definir valores iniciais
+    
+    # Definindo os endereços de origem e destino na memória
+    # Simulando as instruções de origem e destino
+    # Exemplo: sourceIndex em 0x02 (0x02) = 0x02, e deve ser copiado para memory[0x03] (0x03)
+    vm.memory[0:3] = [0x00, 0x00, 0x02]  # sourceIndex = 0x02 (copia de 2)
+    vm.memory[3:6] = [0x00, 0x00, 0x03]  # targetIndex = 0x03 (escreve em 3)
+    
+    # Atualiza pc para apontar para a próxima operação
+    vm.memory[6:9] = [0x00, 0x00, 0x04]  # Próximo pc (0x04) para a próxima operação
+    
+    print("Memória antes do run:", vm.memory[:10])
+    
+    # Rodar o método
+    vm.run()
+    
+    print("Memória após o run:", vm.memory[:10])
+    
+    # Esperado: valor de memory[0x03] deve ser igual ao valor de memory[0x02]
+    expected_value = initial_memory[2]  # Deverá ser 0x02
+    assert vm.memory[0x03] == expected_value, f"Erro: Esperado {expected_value}, mas retornou {vm.memory[0x03]}"
+    
+    print("Teste run passou com sucesso!")
+    
 def test_get_address():
     vm = BytePusherVM()
     
