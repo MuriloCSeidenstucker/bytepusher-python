@@ -19,6 +19,7 @@ class BytePusherVM:
     def run(self):
         self.update_pressed_keys()
         self.process_byte_byte_jump()
+        self.iodriver.render_display_frame(self.copy(self.get_address(5, 1) << 16, 256 * 256))
     
     def get_address(self, pc: int, length: int) -> int:
         address = 0
@@ -26,6 +27,15 @@ class BytePusherVM:
             address = (address << 8) + int(self.memory[pc])
             pc += 1
         return address
+    
+    def copy(self, start, length):
+        # Ajustar o comprimento para não ultrapassar os limites
+        if start < 0 or start >= len(self.memory):
+            return np.array([], dtype=np.uint8)  # Retorna vazio se o start estiver fora do range
+        if start + length > len(self.memory):
+            length = len(self.memory) - start  # Ajusta o length para não ultrapassar
+        return self.memory[start:start + length].copy()
+
     
     def update_pressed_keys(self):
         keys_pressed = self.iodriver.get_key_pressed()
@@ -36,13 +46,11 @@ class BytePusherVM:
         instruction_counter = 0x10000 # 65536
         pc = self.get_address(2, 3)
         while instruction_counter != 0:
-            sourceIndex = self.get_address(pc, 3)
-            targetIndex = self.get_address(pc + 3, 3)
-            self.memory[targetIndex] = self.memory[sourceIndex]
+            source_index = self.get_address(pc, 3)
+            target_index = self.get_address(pc + 3, 3)
+            # Impedir acesso no último índice
+            if target_index >= 0 and target_index < len(self.memory) - 1:
+                self.memory[target_index] = self.memory[source_index]
             pc = self.get_address(pc + 6, 3)
             instruction_counter-=1
                 
-if __name__ == '__main__':
-    vm = BytePusherVM()
-    vm.load(r"C:\Users\USUARIO\Downloads\Scrolling Logo.BytePusher")
-    

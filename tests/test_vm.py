@@ -155,3 +155,59 @@ def test_get_address():
     logging.info(f'Endereço esperado: {hex(expected_address)}, endereço obtido: {hex(address)}')
     
     logging.info("Teste do método de obter endereçoes passou com sucesso!\n")
+    
+def test_copy():
+    logging.info('Iniciando teste do método copy...')
+
+    mock_iodriver = MagicMock(spec=BytePusherIODriver)
+    vm = BytePusherVM(iodriver=mock_iodriver)
+    vm.memory = np.array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09], dtype=np.uint8)
+
+    logging.info(f'Memória inicial: {vm.memory}')
+
+    start = 2
+    length = 5
+    logging.info(f'Testar a cópia com parâmetros válidos -> start: {start}, length: {length}')
+    copied_memory = vm.copy(start, length)
+
+    expected_memory = np.array([0x02, 0x03, 0x04, 0x05, 0x06], dtype=np.uint8)
+    logging.info(f'Memória copiada (esperado): {expected_memory}')
+    logging.info(f'Memória copiada (obtido):   {copied_memory}')
+
+    # Verificar se a cópia está correta
+    if not np.array_equal(copied_memory, expected_memory):
+        logging.error("Cópia da memória está incorreta!\n")
+    assert np.array_equal(copied_memory, expected_memory), "Erro: Cópia da memória está incorreta!"
+    logging.info('Cópia da memória está correta!')
+
+    start = 7
+    length = 5
+    logging.info(f'Testar a cópia com limites fora do range -> start: {start}, length: {length}')
+    copied_memory = vm.copy(start, length)
+
+    expected_memory = np.array([0x07, 0x08, 0x09], dtype=np.uint8)
+    logging.info(f'Memória copiada (esperado): {expected_memory}')
+    logging.info(f'Memória copiada (obtido):   {copied_memory}')
+
+    # Verificar se a cópia está correta
+    if not np.array_equal(copied_memory, expected_memory):
+        logging.error("Cópia da memória está incorreta ao ultrapassar limites!\n")
+    assert np.array_equal(copied_memory, expected_memory), "Erro: Cópia da memória está incorreta ao ultrapassar limites!"
+    logging.info('Cópia da memória com limites está correta!')
+
+    start = 10  # Fora dos limites
+    length = 5
+    logging.info(f'Testar a cópia com start fora do range -> start: {start}, length: {length}')
+    copied_memory = vm.copy(start, length)
+
+    expected_memory = np.array([], dtype=np.uint8)  # Esperado nada
+    logging.info(f'Memória copiada (esperado): {expected_memory}')
+    logging.info(f'Memória copiada (obtido):   {copied_memory}')
+
+    # Verificar se a cópia está correta
+    if not np.array_equal(copied_memory, expected_memory):
+        logging.error("Cópia da memória não deveria retornar dados!\n")
+    assert np.array_equal(copied_memory, expected_memory), "Erro: Cópia da memória não deveria retornar dados!"
+    logging.info('Cópia da memória quando start está fora do range está correta!')
+
+    logging.info("Teste do método copy passou com sucesso!\n")

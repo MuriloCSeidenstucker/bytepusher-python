@@ -1,8 +1,16 @@
+import numpy as np
 import pygame
+import logging
+
+from byte_pusher_py.log_config import configure_test_logging
+
+configure_test_logging()
 
 class BytePusherIODriver:
-    def __init__(self):
-        pygame.init()
+    def __init__(self, screen):
+        # Cria o buffer RGB (256x256 com 3 canais para RGB)
+        self.rgbuffer = np.zeros((256, 256, 3), dtype=np.uint8)
+        self.screen = screen
 
     def get_key_pressed(self):
         key = 0
@@ -30,31 +38,34 @@ class BytePusherIODriver:
         
         return key
 
-if __name__ == "__main__":
-    iodriver = BytePusherIODriver()
-    
-    # Configuração da janela do Pygame
-    screen = pygame.display.set_mode((800, 600))
-    pygame.display.set_caption("Key Press Example")
+    def render_display_frame(self, data):
+        self.rgbuffer.fill(0)  # Limpa o buffer RGB
+        
+        for i, c in enumerate(data):
+            if c < 0 or c > 255:
+                continue  # Ignora valores fora do intervalo
 
-    # Loop principal do Pygame
-    running = True
-    last_key_pressed = 0
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        key_press = iodriver.get_key_pressed()
-        if key_press != 0:
-            if key_press == last_key_pressed:
-                pass
+            # Cálculo dos componentes de cor
+            if c < 216:
+                red = (c // 36) % 6
+                green = (c // 6) % 6
+                blue = c % 6
             else:
-                print(f"Key Pressed Value: {key_press}")
-                last_key_pressed = key_press
+                # Valores de 216 a 255 são pretos
+                red, green, blue = 0, 0, 0
 
-        # Atualizar a tela (opcional)
-        screen.fill((0, 0, 0))  # Limpa a tela
-        pygame.display.flip()    # Atualiza a tela
+            # Multiplicando por 51 para obter a intensidade correta (0 a 255)
+            red_color = red * 51
+            green_color = green * 51
+            blue_color = blue * 51
 
-    pygame.quit()
+            # Determinando a posição x, y
+            x = i % 256  # Posição x
+            y = i // 256  # Posição y
+
+            # Renderiza a cor no buffer
+            self.rgbuffer[x, y] = [red_color, green_color, blue_color]
+
+        # Atualiza a tela com o buffer RGB usando surfarray
+        pygame.surfarray.blit_array(self.screen, self.rgbuffer)
+        pygame.display.flip()
